@@ -1,7 +1,12 @@
-import React, { useEffect, useRef } from 'react';
-import { User, Bot } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { User, Bot, MessageSquare, ChevronDown, ChevronRight } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { Message } from '../types';
 import { TypingIndicator } from './TypingIndicator';
+import { TextToSpeechButton } from './TextToSpeechButton';
+import { CodeBlock } from './CodeBlock';
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -10,10 +15,63 @@ interface ChatMessagesProps {
 
 export function ChatMessages({ messages, isStreaming }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showThoughts, setShowThoughts] = useState(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isStreaming]);
+
+  const renderMessageContent = (message: Message) => {
+    const [thoughts, userMessage] = message.content.includes('---') 
+      ? message.content.split('---')
+      : [null, message.content];
+
+    return (
+      <div className="prose prose-sm max-w-none dark:prose-invert">
+        {thoughts && (
+          <div>
+            <button 
+              onClick={() => setShowThoughts(!showThoughts)}
+              className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2"
+            >
+              {showThoughts ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              {showThoughts ? 'Hide Thoughts' : 'Show Thoughts'}
+            </button>
+            {showThoughts && (
+              <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg mb-2">
+                <ReactMarkdown>{thoughts}</ReactMarkdown>
+              </div>
+            )}
+          </div>
+        )}
+        <ReactMarkdown
+          components={{
+            code({ node, inline, className, children, ...props }) {
+              const match = /language-(\w+)/.exec(className || '');
+              return !inline && match ? (
+                <CodeBlock language={match[1]} value={String(children).replace(/\n$/, '')} />
+              ) : (
+                <code className={className} {...props}>
+                  {children}
+                </code>
+              );
+            },
+          }}
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
+        >
+          {userMessage || ''}
+        </ReactMarkdown>
+      </div>
+    );
+  };
+
+  const getTextToSpeechContent = (content: string) => {
+    if (content.includes('---')) {
+      return content.split('---')[1];
+    }
+    return content;
+  };
 
   if (messages.length === 0 && !isStreaming) {
     return (
@@ -53,26 +111,18 @@ export function ChatMessages({ messages, isStreaming }: ChatMessagesProps) {
                 : 'bg-white/90 dark:bg-gray-800/90 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700'
             }`}
           >
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              {message.content.split('\n').map((line, index) => {
-                if (line.startsWith('```')) {
-                  return null; // Handle code blocks separately if needed
-                }
-                return (
-                  <p key={index} className={index === 0 ? 'mt-0' : ''}>
-                    {line || '\u00A0'}
-                  </p>
-                );
-              })}
-            </div>
-            <div className={`text-xs mt-2 ${
+            {renderMessageContent(message)}
+            <div className={`flex items-center justify-between text-xs mt-2 ${
               message.role === 'user' 
                 ? 'text-blue-100' 
                 : 'text-gray-500 dark:text-gray-400'
             }`}>
+              <span>
               {typeof message.timestamp === 'string'
                 ? new Date(message.timestamp).toLocaleTimeString()
                 : message.timestamp.toLocaleTimeString()}
+              </span>
+              <TextToSpeechButton text={getTextToSpeechContent(message.content)} />
             </div>
           </div>
 
