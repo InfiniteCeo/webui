@@ -25,7 +25,7 @@ export function ChatArea({
   onExportConversation,
 }: ChatAreaProps) {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gradient-to-b from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
         <div className="flex items-center gap-3">
@@ -84,7 +84,7 @@ export function ChatArea({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto px-0 md:px-8 py-2">
         <ChatMessages 
           messages={conversation?.messages || []} 
           isStreaming={isStreaming}
@@ -92,7 +92,7 @@ export function ChatArea({
       </div>
 
       {/* Input */}
-      <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-inner">
         <ChatInput 
           onSendMessage={onSendMessage} 
           isStreaming={isStreaming}

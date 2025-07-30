@@ -32,7 +32,7 @@ A modern, responsive web interface for interacting with Ollama large language mo
 - **Icons**: Lucide React
 - **Build Tool**: Vite
 - **State Management**: React hooks with localStorage persistence
-- **API Integration**: Mock Ollama service (easily replaceable with real API)
+- **API Integration**: Real-time integration with the Ollama API.
 
 ## Getting Started
 
@@ -88,60 +88,7 @@ VITE_APP_NAME=Ollama Web UI
 
 To connect to a real Ollama instance, replace the mock service in `src/services/mockOllamaService.ts` with a real implementation:
 
-```typescript
-// src/services/ollamaService.ts
-class OllamaService {
-  private baseUrl = import.meta.env.VITE_OLLAMA_API_URL || 'http://localhost:11434';
 
-  async getModels(): Promise<OllamaModel[]> {
-    const response = await fetch(`${this.baseUrl}/api/tags`);
-    const data = await response.json();
-    return data.models;
-  }
-
-  async *streamChat(messages: Message[], settings: ChatSettings) {
-    const response = await fetch(`${this.baseUrl}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: settings.model,
-        messages: messages.map(m => ({ role: m.role, content: m.content })),
-        stream: true,
-        options: {
-          temperature: settings.temperature,
-          top_p: settings.top_p,
-          top_k: settings.top_k,
-          repeat_penalty: settings.repeat_penalty,
-        },
-      }),
-    });
-
-    const reader = response.body?.getReader();
-    if (!reader) return;
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunk = new TextDecoder().decode(value);
-      const lines = chunk.split('\n');
-      
-      for (const line of lines) {
-        if (line.trim()) {
-          try {
-            const data = JSON.parse(line);
-            if (data.message?.content) {
-              yield data.message.content;
-            }
-          } catch (e) {
-            // Skip invalid JSON lines
-          }
-        }
-      }
-    }
-  }
-}
-```
 
 ## Project Structure
 
@@ -185,26 +132,7 @@ theme: {
 },
 ```
 
-### Models
-Add or modify available models in `src/services/mockOllamaService.ts`:
 
-```typescript
-const MOCK_MODELS: OllamaModel[] = [
-  {
-    name: 'your-model:latest',
-    displayName: 'Your Custom Model',
-    size: '7.2GB',
-    modified: new Date(),
-    parameters: {
-      temperature: 0.7,
-      top_p: 0.9,
-      top_k: 40,
-      repeat_penalty: 1.1,
-    },
-  },
-  // ... more models
-];
-```
 
 ## Contributing
 

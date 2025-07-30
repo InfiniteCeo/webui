@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useTheme } from './hooks/useTheme';
-import { ollamaService } from './services/mockOllamaService';
+import { ollamaService } from './services/ollamaService';
 import { exportToMarkdown, exportToJSON, downloadFile } from './utils/exportUtils';
 import { Conversation, Message, OllamaModel, ChatSettings } from './types';
 
